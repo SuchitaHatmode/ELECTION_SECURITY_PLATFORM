@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cast Your Vote</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f8f9fa;
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+
+        .vote-container {
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 30px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1);
+            animation: fadeInUp 1s ease-out;
+        }
+
+        .vote-container h2 {
+            text-align: center;
+            font-size: 1.8rem;
+            font-weight: bold;
+            margin-bottom: 25px;
+            color: #007bff;
+            animation: fadeIn 1.5s ease-out;
+        }
+
+        .video-container {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        video {
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            width: 100%;
+            max-width: 600px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        video:hover {
+            transform: scale(1.05);
+        }
+
+        .form-check-label {
+            font-size: 1.1rem;
+            color: #495057;
+        }
+
+        .form-check-input {
+            transition: all 0.3s ease;
+        }
+
+        .form-check-input:checked {
+            background-color: #007bff;
+            border-color: #007bff;
+        }
+
+        .form-check-input:focus {
+            box-shadow: 0 0 0 0.25rem rgba(0, 123, 255, 0.5);
+        }
+
+        .btn-primary {
+            width: 100%;
+            padding: 12px;
+            font-size: 1.2rem;
+            background-color: #007bff;
+            border-radius: 5px;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary:hover {
+            background-color: #0056b3;
+            transform: scale(1.05);
+        }
+
+        /* Animation Keyframes */
+        @keyframes fadeInUp {
+            0% { opacity: 0; transform: translateY(30px); }
+            100% { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes fadeIn {
+            0% { opacity: 0; }
+            100% { opacity: 1; }
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .vote-container {
+                margin-top: 30px;
+                padding: 20px;
+            }
+
+            .vote-container h2 {
+                font-size: 1.5rem;
+            }
+
+            .form-check-label {
+                font-size: 1rem;
+            }
+
+            .btn-primary {
+                padding: 10px;
+            }
+
+            video {
+                max-width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="vote-container">
+        <h2>I am casting my vote to the following party</h2>
+
+        <div class="video-container">
+            <video id="liveVideo" autoplay></video>
+        </div>
+
+        <!-- Upload Photo Component -->
+        <div class="mb-3">
+            <label for="photoUpload" class="form-label">Upload Your Photo</label>
+            <input type="file" class="form-control" id="photoUpload" accept="image/*" required>
+        </div>
+
+        <form action="#" method="POST">
+            <div class="mb-3">
+                <label for="partySelection" class="form-label">Select a party:</label>
+                <div id="partySelection">
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="party" id="party1" value="BJP" required>
+                        <label class="form-check-label" for="party1">BJP</label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="party" id="party2" value="Congress">
+                        <label class="form-check-label" for="party2">Congress</label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="party" id="party3" value="AAP">
+                        <label class="form-check-label" for="party3">AAP</label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="party" id="party4" value="Shiv Sena">
+                        <label class="form-check-label" for="party4">Shiv Sena</label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="party" id="party5" value="Others">
+                        <label class="form-check-label" for="party5">Others</label>
+                    </div>
+                </div>
+            </div>
+            <div class="text-center">
+                <button type="submit" class="btn btn-primary">Submit Vote</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Bootstrap Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Face-api.js Script -->
+    <script defer src="https://cdn.jsdelivr.net/npm/face-api.js"></script>
+
+    <script>
+        const videoElement = document.getElementById('liveVideo');
+        const photoUpload = document.getElementById('photoUpload');
+        let uploadedImage = null;
+
+        // Request access to the user's webcam
+        navigator.mediaDevices.getUserMedia({ video: true })
+            .then((stream) => {
+                videoElement.srcObject = stream;
+            })
+            .catch((error) => {
+                console.error('Error accessing webcam:', error);
+            });
+
+        // Load face-api.js models
+        Promise.all([
+            faceapi.nets.ssdMobilenetv1.loadFromUri('/models'),
+            faceapi.nets.faceLandmark68Net.loadFromUri('/models'),
+            faceapi.nets.faceRecognitionNet.loadFromUri('/models')
+        ]).then(() => {
+            console.log('Models Loaded!');
+        });
+
+        // Handle photo upload and store the face data
+        photoUpload.addEventListener('change', async (event) => {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const image = await faceapi.bufferToImage(file);
+            uploadedImage = image;
+            const detections = await faceapi.detectSingleFace(image).withFaceLandmarks().withFaceDescriptor();
+
+            if (detections) {
+                console.log('Face detected in uploaded photo');
+            } else {
+                console.error('No face detected in the uploaded photo');
+            }
+        });
+
+        // Compare the faces from the webcam and the uploaded photo
+        async function compareFaces() {
+            if (uploadedImage) {
+                const videoCanvas = faceapi.createCanvasFromMedia(videoElement);
+                document.body.append(videoCanvas);
+                const detections = await faceapi.detectSingleFace(videoElement).withFaceLandmarks().withFaceDescriptor();
+
+                if (detections) {
+                    const imageDescriptors = await faceapi.computeFaceDescriptor(uploadedImage);
+                    const distance = faceapi.euclideanDistance(detections.descriptor, imageDescriptors);
+                    console.log('Face distance:', distance);
+
+                    if (distance < 0.6) {
+                        alert('Face matched! You can cast your vote.');
+                    } else {
+                        alert('Face did not match. Please upload a valid photo.');
+                    }
+                }
+            }
+        }
+
+        // Run face comparison when submitting the vote
+        document.querySelector('form').addEventListener('submit', (event) => {
+            event.preventDefault();
+            compareFaces();
+        });
+    </script>
+</body>
+</html>
